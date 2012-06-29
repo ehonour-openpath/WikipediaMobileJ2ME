@@ -1,9 +1,9 @@
 *.class
 
 # Package Files #
-*.jar
+#*.jar
 *.war
 *.ear
 /nbproject/private/
 /build/
-/dist/
+#/dist/
