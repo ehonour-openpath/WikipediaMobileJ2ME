@@ -81,23 +81,10 @@ public class NetworkThread implements Runnable {
             //System.out.println("!@#$% Net Mem finish1: "+Runtime.getRuntime().freeMemory());
             return;
         }
-        Vector vecResponse = null;
-        switch(m_iParseStyle) {
-            case NetworkController.PARSE_SEARCH:
-                //TODO: Parse Json to components here.
-                break;
-        }//end switch
-        if(m_bIsNetDone) {
-            m_oTimeoutTimer.cancel();
-            cleanResponse();
-            NetworkController.hideLoadingDialog();
-            //System.out.println("!@#$% Net Mem finish2: "+Runtime.getRuntime().freeMemory());
-            return;
-        }
         NetworkController.hideLoadingDialog();
-        if(vecResponse != null && m_oResponseJSON != null){
+        if(m_oResponseJSON != null){
             if(mainMIDlet.getCurrentPage() != null) {
-                mainMIDlet.getCurrentPage().addData(vecResponse);
+                mainMIDlet.getCurrentPage().addData(m_oResponseJSON);
             }
         }else {
             if(mainMIDlet.getCurrentPage() != null) {
@@ -164,6 +151,7 @@ public class NetworkThread implements Runnable {
                 size = input.read(buffer);
             }
             JsonObject outputJson = (JsonObject)Json.parse(inputStr.toString());
+            return outputJson;
             //return handler.getNodes();
 
         } 

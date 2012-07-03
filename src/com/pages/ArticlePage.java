@@ -4,16 +4,16 @@
  */
 package com.pages;
 
+import com.*;
 import com.sun.lwuit.*;
 import com.sun.lwuit.events.*;
 import com.sun.lwuit.Display;
+import com.sun.lwuit.html.DefaultHTMLCallback;
+import com.sun.lwuit.html.HTMLComponent;
 
 
 import java.util.Vector;
 
-import com.mainMIDlet;
-import com.JsonObject;
-import com.NetworkController;
 /**
  *
  * @author caxthelm
@@ -46,13 +46,18 @@ public class ArticlePage extends BasePage {
             //Create dynamic components here.
             Label cTitleLabel = (Label)mainMIDlet.getBuilder().findByName("SubjectTitleLabel", m_cHeaderContainer);
             if(cTitleLabel != null) {
-                cTitleLabel.setText(_sTitle);
+                String realTitle = _sTitle.replace('_', ' ');
+                cTitleLabel.setText(realTitle);
             }
             
             m_cForm.addShowListener(new ActionListener() {
                 public void actionPerformed(ActionEvent ev) {
                     m_cForm.removeShowListener(this);
-                    addData(m_oData);
+                    if(m_oData == null) {
+                        NetworkController.getInstance().performSearch(m_sTitle,  "0");
+                    }else {
+                        addData(m_oData);
+                    }
                 }
             });
             updateSoftkeys();
@@ -146,35 +151,60 @@ public class ArticlePage extends BasePage {
     public void addData(Object _results) {
         if(_results == null) {
             //We have nothing, make the data call.
-            //NetworkController.getInstance().performSearch(m_sTitle, null);
+            NetworkController.getInstance().performSearch(m_sTitle, m_sCurrentSections);
         }
-        if(m_cContentContainer != null)
+        Vector sections = Utilities.getSectionsFromJSON((JsonObject)_results);
+        if(m_cContentContainer != null && sections != null && sections.size() > 0)
         {
             m_cContentContainer.removeAll();
-            TextArea loremIpsum = new TextArea();
-            loremIpsum.setText("Lorem ipsum dolor sit amet, consectetuer adipiscing"
-                    + " elit, sed diam nonummy nibh euismod tincidunt ut laoreet "
-                    + "dolore magna aliquam erat volutpat. Ut wisi enim ad minim "
-                    + "veniam, quis nostrud exerci tation ullamcorper suscipit"
-                    + " lobortis nisl ut aliquip ex ea commodo consequat. Duis "
-                    + "autem vel eum iriure dolor in hendrerit in vulputate velit"
-                    + " esse molestie consequat, vel illum dolore eu feugiat nulla "
-                    + "facilisis at vero eros et accumsan et iusto odio dignissim "
-                    + "qui blandit praesent luptatum zzril delenit augue duis "
-                    + "dolore te feugait nulla facilisi. Nam liber tempor cum "
-                    + "soluta nobis eleifend option congue nihil imperdiet doming"
-                    + " id quod mazim placerat facer possim assum.");
-            loremIpsum.setUIID("No_Margins");
-            loremIpsum.setEditable(false);
-            loremIpsum.setFocus(true);
-            m_cContentContainer.addComponent(loremIpsum);
-            Container cont = mainMIDlet.getBuilder().createContainer(mainMIDlet.getResources(), "SubCategoryItem");
-            if(cont != null) {
-                Label title = (Label)mainMIDlet.getBuilder().findByName("SubCategoryTitleLabel", cont);
-                title.setText("Lorem Ipsum");
-                m_cContentContainer.addComponent(cont);
-            }
-        }
+            //Deal with the main article text first.
+            Object oTextItem = sections.firstElement();
+            if(oTextItem instanceof JsonObject) {
+                String sText = (String)((JsonObject)oTextItem).get("text");
+                sText = Utilities.stripSlash(sText);
+                HTMLComponentItem oHTMLItem = new HTMLComponentItem(sText);
+                HTMLComponent cTextComp = (HTMLComponent)oHTMLItem.getComponent();
+                if(cTextComp != null) {
+                    cTextComp.setHTMLCallback(new DefaultHTMLCallback()
+                    {
+                        public boolean linkClicked(HTMLComponent htmlC, java.lang.String url) 
+                        {
+                            System.out.println("link: "+url);
+                            int wikiIdx = url.indexOf("/wiki/");
+                            if(wikiIdx >= 0) {
+                                String title = url.substring(wikiIdx + 6);
+                                mainMIDlet.setCurrentPage(new ArticlePage(title, null));
+                            }
+                            return false;
+                        }
+
+                    }); 
+                    m_cContentContainer.addComponent(cTextComp);
+                }
+            }//end if(oTextItem instanceof JsonObject)
+            
+            //Add in the other sections
+                System.out.println("sections: "+sections.size());
+            for(int i = 1; i < sections.size(); i++) {
+                JsonObject oSection = (JsonObject)sections.elementAt(i);
+                String sTitle = (String)oSection.get("line");
+                String sText = (String)oSection.get("text");
+                boolean bActive = false;
+                if(sText != null && sText.length() > 0) {
+                    bActive = false;
+                }
+                System.out.println("item: "+sTitle);
+                Integer sTocLevel = (Integer)oSection.get("toclevel");
+                String sID = (String)oSection.get("id");
+                if(sTocLevel.intValue() == 1) {
+                    SectionComponentItem sectionItem = new SectionComponentItem(sTitle, 40 + i, sID);
+                    Component cSectionComp = sectionItem.createComponent(sTitle, bActive);
+                    if(cSectionComp != null) {
+                        m_cContentContainer.addComponent(cSectionComp);
+                    }
+                }
+            }//end for(int i = 1; i > sections.size(); i++)
+        }//end if(m_cContentContainer != null && sections != null && sections.size() > 0)
         m_cForm.repaint();
     }//end addData(Object _results)
     

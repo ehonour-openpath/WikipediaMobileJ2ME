@@ -7,12 +7,17 @@ package com.pages;
 import com.sun.lwuit.*;
 import com.sun.lwuit.events.*;
 import com.sun.lwuit.Display;
+import com.sun.lwuit.html.DefaultHTMLCallback;
+import com.sun.lwuit.html.HTMLComponent;
 
 
 import java.util.Vector;
 
 import com.mainMIDlet;
 import com.NetworkController;
+import com.HTMLComponentItem;
+import com.Utilities;
+import com.JsonObject;
 /**
  *
  * @author caxthelm
@@ -72,7 +77,7 @@ public class MainPage extends BasePage {
             m_cForm.addShowListener(new ActionListener() {
                 public void actionPerformed(ActionEvent ev) {
                     m_cForm.removeShowListener(this);
-                    addData(null);
+                    NetworkController.getInstance().performSearch("Main_Page",  "0");
                 }
             });
             updateSoftkeys();
@@ -176,21 +181,39 @@ public class MainPage extends BasePage {
     
     public void addData(Object _results) {
         
-        if(m_cContentContainer != null)
-        {
+        Vector sections = Utilities.getSectionsFromJSON((JsonObject)_results);
+        if(m_cContentContainer != null && sections != null && sections.size() > 0)
+        { 
             Container articleCont = (Container)mainMIDlet.getBuilder().findByName("ArticleBodyTextItem", m_cContentContainer);
-            if(articleCont != null) {
-                articleCont.removeAll();
-                TextArea loremIpsum = new TextArea();
-                loremIpsum.setText("Lorem ipsum dolor sit amet, consectetuer adipiscing"
-                        + " elit, sed diam nonummy nibh euismod tincidunt ut laoreet "
-                        + "dolore magna aliquam erat volutpat. Ut wisi enim ad minim");
-                loremIpsum.setUIID("No_Margins");
-                loremIpsum.setEditable(false);
-                loremIpsum.setFocus(true);
-                articleCont.addComponent(loremIpsum);
+            if(articleCont == null) {
+                //TODO: Add in error message here.
+                return;
             }
-        }
+            Object oTextItem = sections.firstElement();
+            if(oTextItem instanceof JsonObject) {
+                String sText = (String)((JsonObject)oTextItem).get("text");
+                sText = Utilities.stripSlash(sText);
+                HTMLComponentItem oHTMLItem = new HTMLComponentItem(sText);
+                HTMLComponent cTextComp = (HTMLComponent)oHTMLItem.getComponent();
+                if(cTextComp != null) {
+                    cTextComp.setHTMLCallback(new DefaultHTMLCallback()
+                    {
+                        public boolean linkClicked(HTMLComponent htmlC, java.lang.String url) 
+                        {
+                            System.out.println("link: "+url);
+                            int wikiIdx = url.indexOf("/wiki/");
+                            if(wikiIdx >= 0) {
+                                String title = url.substring(wikiIdx + 6);
+                                mainMIDlet.setCurrentPage(new ArticlePage(title, null));
+                            }
+                            return false;
+                        }
+
+                    });
+                    articleCont.addComponent(cTextComp);
+                }
+            }
+        }//end if(m_cContentContainer != null && sections != null && sections.size() > 0)
         m_cForm.repaint();
     }//end addData(Object _results)
     

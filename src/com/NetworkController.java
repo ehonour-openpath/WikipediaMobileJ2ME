@@ -66,7 +66,7 @@ public class NetworkController {
         //System.out.println("finished disposing loading");
     }//end hideLoadingDialog()
 
-    /****Location & Categories ************************************************/
+    /****Search ************************************************/
       
     public void performSearch(String _sURL) {
         NetworkController.showLoadingDialog();
@@ -143,22 +143,8 @@ public class NetworkController {
         int index = _sHaystack.indexOf(_sNeedle);
         if(index >= 0) {
             String replacement = HtmlEncode(_sNeedle);        
-            return replace(_sNeedle, replacement, _sHaystack);
+            return Utilities.replace(_sNeedle, replacement, _sHaystack);
         }
         return _sHaystack;
     }//end htmlReplace(String needle, String haystack)
-    
-    private static String replace(String _sNeedle, String _sReplacement, String _sHaystack) {
-        String result = "";
-        int index = _sHaystack.indexOf(_sNeedle);
-        if(index == 0) {
-            result = _sReplacement+_sHaystack.substring(_sNeedle.length());
-            return replace(_sNeedle, _sReplacement, result);
-        }else if(index > 0) {
-            result = _sHaystack.substring(0,index)+ _sReplacement +_sHaystack.substring(index+_sNeedle.length());
-            return replace(_sNeedle, _sReplacement, result);
-        }else {
-            return _sHaystack;
-        }
-    }//end replace(String needle, String replacement, String haystack)
 }

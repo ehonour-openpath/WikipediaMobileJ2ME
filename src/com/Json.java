@@ -187,6 +187,7 @@ public class Json {
         }
         StringBuffer returnStr = new StringBuffer(m_sJson.substring(m_iIndex, endIdx));
         m_iIndex = endIdx + 1;
+        //System.out.println("Json string: "+returnStr.toString());
 	return returnStr.toString();
     }//end parseString()
     
