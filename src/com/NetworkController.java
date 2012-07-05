@@ -92,22 +92,23 @@ public class NetworkController {
         url.append("&");
         url.append("prop=text%7Csections");
         url.append("&");
+        url.append("sectionprop=toclevel%7Cline%7Cnumber%7C");
 
         //http://rest.annunci.ebay.it/columbus-api/ads?categoryId=16842752&locationId=-1&q=rft&page=0&size=25&extension[histogram]=category&_ver=1.10
         if(_sSection == null || _sSection.length() == 0) {
             _sSection = "0";
         }
         if(!_sSection.equalsIgnoreCase("-1")) {
+            url.append("&");
             url.append("sections=");
             url.append(_sSection);
-            url.append("&");
         }
         
         
         String sKeyword = _sSearchTerm.trim();
         if (sKeyword != null && sKeyword.length() > 0)
         {
-
+            url.append("&");
             sKeyword = sKeyword.replace(' ', '+');
             url.append("page=");           
             url.append(HtmlEncode(sKeyword));

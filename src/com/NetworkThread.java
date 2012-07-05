@@ -81,15 +81,25 @@ public class NetworkThread implements Runnable {
             //System.out.println("!@#$% Net Mem finish1: "+Runtime.getRuntime().freeMemory());
             return;
         }
-        NetworkController.hideLoadingDialog();
-        if(m_oResponseJSON != null){
-            if(mainMIDlet.getCurrentPage() != null) {
-                mainMIDlet.getCurrentPage().addData(m_oResponseJSON);
+        boolean hasError = false;
+        if(m_oResponseJSON != null) {
+            Object error = m_oResponseJSON.get("error");
+            if(error != null) {
+                hasError = true;
             }
         }else {
+            hasError = true;
+        }
+        if(hasError){
+            NetworkController.hideLoadingDialog();
             if(mainMIDlet.getCurrentPage() != null) {
                 mainMIDlet.getCurrentPage().failedNetwork(m_iResponseCode);
             }
+        }else {
+            if(mainMIDlet.getCurrentPage() != null) {
+                mainMIDlet.getCurrentPage().addData(m_oResponseJSON);
+            }
+            NetworkController.hideLoadingDialog();
         }
         m_oTimeoutTimer.cancel();
         cleanResponse();

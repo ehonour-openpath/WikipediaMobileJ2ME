@@ -41,4 +41,24 @@ public class JsonObject extends Hashtable {
             ((JsonObject)_oChild).cleanChildren();
         }
     }//end cleanChild()
+    
+    public String getString(String _sKey)
+    {
+        Object value = get(_sKey);
+        if(value != null && value instanceof String) {
+            return (String)value;
+        }else if(value != null && value instanceof Integer) {
+            return ((Integer)value).toString();
+        }
+        return "";
+    }
+    
+    public Integer getInteger(String _sKey)
+    {
+        Object value = get(_sKey);
+        if(value != null && value instanceof Integer) {
+            return (Integer)value;
+        }
+        return null;
+    }
 }

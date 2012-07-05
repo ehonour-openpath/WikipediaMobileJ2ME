@@ -13,6 +13,8 @@ import com.sun.lwuit.html.HTMLComponent;
 
 
 import java.util.Vector;
+import java.util.Stack;
+import java.util.Hashtable;
 
 /**
  *
@@ -32,6 +34,8 @@ public class ArticlePage extends BasePage {
     String m_sTitle = "";
     String m_sCurrentSections = "0";
     TextField searchTextField = null;
+    
+    Hashtable m_oComponentList = new Hashtable();
     public ArticlePage(String _sTitle, JsonObject _oData) {
         super("ArticlePageForm", PAGE_MAIN);
         
@@ -125,6 +129,27 @@ public class ArticlePage extends BasePage {
                 break;
             default://dealing with the dynamic events
                 {
+                    if(commandId > 40) {
+                        String sID = String.valueOf(commandId - 40);
+                        Object section = m_oComponentList.get(new Integer(commandId));
+                        if(section instanceof SectionComponentItem) {
+                            SectionComponentItem sectionItem = (SectionComponentItem)section;
+                            if(sectionItem.isActive())
+                            {
+                                sectionItem.setActive(false);
+                            }else {
+                                if(sectionItem.getParentID().length() <= 0 
+                                        || m_sCurrentSections.indexOf(sectionItem.getParentID()) <= -1) 
+                                {
+                                    
+                                    //TODO: This does not take into account closing siblings.
+                                    m_sCurrentSections = "0";
+                                }
+                                m_sCurrentSections += "|"+sID;
+                                NetworkController.getInstance().performSearch(m_sTitle,  m_sCurrentSections);
+                            }
+                        }//end if(section instanceof SectionComponentItem)
+                    }//end if(commandId > 40)
                 }
                 break;
         }
@@ -158,6 +183,7 @@ public class ArticlePage extends BasePage {
         {
             m_cContentContainer.removeAll();
             //Deal with the main article text first.
+            
             Object oTextItem = sections.firstElement();
             if(oTextItem instanceof JsonObject) {
                 String sText = (String)((JsonObject)oTextItem).get("text");
@@ -165,6 +191,7 @@ public class ArticlePage extends BasePage {
                 HTMLComponentItem oHTMLItem = new HTMLComponentItem(sText);
                 HTMLComponent cTextComp = (HTMLComponent)oHTMLItem.getComponent();
                 if(cTextComp != null) {
+                    cTextComp.setPageUIID("Label");
                     cTextComp.setHTMLCallback(new DefaultHTMLCallback()
                     {
                         public boolean linkClicked(HTMLComponent htmlC, java.lang.String url) 
@@ -184,24 +211,43 @@ public class ArticlePage extends BasePage {
             }//end if(oTextItem instanceof JsonObject)
             
             //Add in the other sections
-                System.out.println("sections: "+sections.size());
+            //Since we can cascade through sub-sections, we are using an Array to denote which level should get the child.
+            //TODO: There must be a better way to do this.
+            SectionComponentItem[] aSections = new SectionComponentItem[6];
             for(int i = 1; i < sections.size(); i++) {
                 JsonObject oSection = (JsonObject)sections.elementAt(i);
                 String sTitle = (String)oSection.get("line");
                 String sText = (String)oSection.get("text");
                 boolean bActive = false;
                 if(sText != null && sText.length() > 0) {
-                    bActive = false;
+                    bActive = true;
                 }
-                System.out.println("item: "+sTitle);
-                Integer sTocLevel = (Integer)oSection.get("toclevel");
-                String sID = (String)oSection.get("id");
-                if(sTocLevel.intValue() == 1) {
-                    SectionComponentItem sectionItem = new SectionComponentItem(sTitle, 40 + i, sID);
-                    Component cSectionComp = sectionItem.createComponent(sTitle, bActive);
+                String sTocLevel = oSection.getString("toclevel");
+                String sNumber = oSection.getString("number");
+                //String sLevel = oSection.getString("level");
+                String sID = oSection.getString("id");
+                
+                int arrayLevel = Integer.parseInt(sTocLevel) - 1;//TocLevels begin at 1;
+                if(arrayLevel == 0 || (arrayLevel > 0 && aSections[arrayLevel - 1] != null 
+                        && aSections[arrayLevel - 1].isActive())) 
+                {
+                    SectionComponentItem sectionItem = new SectionComponentItem(sTitle, 40 + i, sNumber);
+                    Component cSectionComp = sectionItem.createComponent(sTitle, bActive, Integer.parseInt(sTocLevel));
                     if(cSectionComp != null) {
-                        m_cContentContainer.addComponent(cSectionComp);
-                    }
+                        m_oComponentList.put(new Integer(40 + i), sectionItem);
+                            //Whatever level we are at we shouldn't have any more sub-levels yet.
+                        for(int j = arrayLevel; j < 5; j++)
+                        {
+                            aSections[j] = null;
+                        }
+                        //set this item into the array and set it to the child of the parent.
+                        aSections[arrayLevel] = sectionItem;
+                        if(arrayLevel == 0) {
+                            m_cContentContainer.addComponent(cSectionComp);
+                        }else {
+                            aSections[arrayLevel - 1].addSubsection(sectionItem);
+                        }
+                    }//end if(cSectionComp != null)
                 }
             }//end for(int i = 1; i > sections.size(); i++)
         }//end if(m_cContentContainer != null && sections != null && sections.size() > 0)

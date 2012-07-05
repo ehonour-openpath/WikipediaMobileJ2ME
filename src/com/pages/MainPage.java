@@ -196,6 +196,7 @@ public class MainPage extends BasePage {
                 HTMLComponentItem oHTMLItem = new HTMLComponentItem(sText);
                 HTMLComponent cTextComp = (HTMLComponent)oHTMLItem.getComponent();
                 if(cTextComp != null) {
+                    cTextComp.setPageUIID("Label");
                     cTextComp.setHTMLCallback(new DefaultHTMLCallback()
                     {
                         public boolean linkClicked(HTMLComponent htmlC, java.lang.String url) 
