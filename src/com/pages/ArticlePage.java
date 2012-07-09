@@ -36,6 +36,9 @@ public class ArticlePage extends BasePage {
     TextField searchTextField = null;
     
     Hashtable m_oComponentList = new Hashtable();
+    
+    private int[] m_iToRequest = new int[6];
+    
     public ArticlePage(String _sTitle, JsonObject _oData) {
         super("ArticlePageForm", PAGE_MAIN);
         
@@ -138,14 +141,14 @@ public class ArticlePage extends BasePage {
                             {
                                 sectionItem.setActive(false);
                             }else {
-                                if(sectionItem.getParentID().length() <= 0 
-                                        || m_sCurrentSections.indexOf(sectionItem.getParentID()) <= -1) 
-                                {
-                                    
-                                    //TODO: This does not take into account closing siblings.
-                                    m_sCurrentSections = "0";
+                                int arrayLevel = Integer.parseInt(sectionItem.getTag()) - 1;
+                                m_iToRequest[arrayLevel] = Integer.parseInt(sID);
+                                m_sCurrentSections = "0";
+                                
+                                for(int i = 0; i < arrayLevel + 1; i++) {
+                                    m_sCurrentSections += "|" + m_iToRequest[i];
                                 }
-                                m_sCurrentSections += "|"+sID;
+                                
                                 NetworkController.getInstance().performSearch(m_sTitle,  m_sCurrentSections);
                             }
                         }//end if(section instanceof SectionComponentItem)
@@ -179,11 +182,12 @@ public class ArticlePage extends BasePage {
             NetworkController.getInstance().performSearch(m_sTitle, m_sCurrentSections);
         }
         Vector sections = Utilities.getSectionsFromJSON((JsonObject)_results);
+        Integer highestTocSoFar = new Integer(1);
         if(m_cContentContainer != null && sections != null && sections.size() > 0)
         {
             m_cContentContainer.removeAll();
             //Deal with the main article text first.
-            
+           
             Object oTextItem = sections.firstElement();
             if(oTextItem instanceof JsonObject) {
                 String sText = (String)((JsonObject)oTextItem).get("text");
@@ -209,19 +213,22 @@ public class ArticlePage extends BasePage {
                     m_cContentContainer.addComponent(cTextComp);
                 }
             }//end if(oTextItem instanceof JsonObject)
-            
+           
             //Add in the other sections
             //Since we can cascade through sub-sections, we are using an Array to denote which level should get the child.
             //TODO: There must be a better way to do this.
             SectionComponentItem[] aSections = new SectionComponentItem[6];
             for(int i = 1; i < sections.size(); i++) {
+                System.out.println(sections.elementAt(i));
                 JsonObject oSection = (JsonObject)sections.elementAt(i);
                 String sTitle = (String)oSection.get("line");
                 String sText = (String)oSection.get("text");
                 boolean bActive = false;
-                if(sText != null && sText.length() > 0) {
+                
+                if(sText != null) {
                     bActive = true;
                 }
+                
                 String sTocLevel = oSection.getString("toclevel");
                 String sNumber = oSection.getString("number");
                 //String sLevel = oSection.getString("level");
@@ -231,7 +238,7 @@ public class ArticlePage extends BasePage {
                 if(arrayLevel == 0 || (arrayLevel > 0 && aSections[arrayLevel - 1] != null 
                         && aSections[arrayLevel - 1].isActive())) 
                 {
-                    SectionComponentItem sectionItem = new SectionComponentItem(sTitle, 40 + i, sNumber);
+                    SectionComponentItem sectionItem = new SectionComponentItem(sTitle, 40 + i, sTocLevel);
                     Component cSectionComp = sectionItem.createComponent(sTitle, bActive, Integer.parseInt(sTocLevel));
                     if(cSectionComp != null) {
                         m_oComponentList.put(new Integer(40 + i), sectionItem);
@@ -242,6 +249,14 @@ public class ArticlePage extends BasePage {
                         }
                         //set this item into the array and set it to the child of the parent.
                         aSections[arrayLevel] = sectionItem;
+
+                        System.out.println(sText);
+                        
+                        if(sText != null && !(sText.length() < 1)) {
+                            //TODO: Need to strip out the <h2> tag at the beginning
+                            sectionItem.addText(sText);
+                        }
+                        
                         if(arrayLevel == 0) {
                             m_cContentContainer.addComponent(cSectionComp);
                         }else {

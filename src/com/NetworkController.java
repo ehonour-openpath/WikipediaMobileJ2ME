@@ -114,6 +114,9 @@ public class NetworkController {
             url.append(HtmlEncode(sKeyword));
             //url.append("");
         }
+        
+        url.append("&noheadings=");
+        
         performSearch(BASE_URL+url.toString());
     }//end performSearch
     

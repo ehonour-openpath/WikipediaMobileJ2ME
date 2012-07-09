@@ -62,7 +62,17 @@ public class SectionComponentItem extends ComponentItem {
             _oSubSection.setParentID(m_sCompTag);
             m_cSubContainer.addComponent(_oSubSection.getComponent());
         }
+
     }//end addSubsection(SectionComponentItem _oSubSection)
+    
+    public void addText(String _text) {
+         if(_text != null && _text.length() > 0) {
+            HTMLComponentItem oHTMLItem = new HTMLComponentItem(_text);
+            HTMLComponent cTextComp = (HTMLComponent)oHTMLItem.getComponent();
+            cTextComp.setPageUIID("Label");
+            m_cSubContainer.addComponent(cTextComp);
+        }
+    }
     
     public int getSectionLevel() {
         return m_iSectionLevel;
