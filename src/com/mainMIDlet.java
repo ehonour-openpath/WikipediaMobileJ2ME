@@ -1,6 +1,7 @@
 
 package com;
 
+import com.pages.ArticlePage;
 import com.pages.BasePage;
 import com.pages.SplashPage;
 

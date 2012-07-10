@@ -89,11 +89,7 @@ public class MainPage extends BasePage {
     }//end SearchPage()
     
     public void updateSoftkeys() {
-        int i = 0;
-        if(true){
-            return;
-        }
-        m_cForm.removeAllCommands();
+        int i = 0;m_cForm.removeAllCommands();
         String  str = "";
         /*if(!mainMIDlet.isTouchEnabled()) {
             str = mainMIDlet.getString("SearchSK");

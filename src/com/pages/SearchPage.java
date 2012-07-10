@@ -28,7 +28,6 @@ public class SearchPage extends BasePage {
     Button m_cSearchButton = null;
     public SearchPage() {
         super("SearchPageForm", PAGE_SEARCH);
-        
         try {
             if(!m_bIsLoaded) {
                 //TODO: make error dialog.
@@ -102,9 +101,6 @@ public class SearchPage extends BasePage {
     
     public void updateSoftkeys() {
         int i = 0;
-        if(true){
-            return;
-        }
         m_cForm.removeAllCommands();
         String  str = "";
         str = mainMIDlet.getString("BackSK");

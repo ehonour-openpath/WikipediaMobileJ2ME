@@ -90,7 +90,7 @@ public class NetworkController {
         url.append("&");
         url.append("format=json");
         url.append("&");
-        url.append("prop=text%7Csections");
+        url.append("prop=text%7Csections%7Cnormalizedtitle");
         url.append("&");
         url.append("sectionprop=toclevel%7Cline%7Cnumber%7C");
 

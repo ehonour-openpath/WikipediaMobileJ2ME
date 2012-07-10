@@ -29,6 +29,10 @@ public class ArticlePage extends BasePage {
     //private final int Command_Privacy = Command_Terms + 1;
     private final int COMMAND_HOME = COMMAND_BOOKMARK + 1;
     
+    private Vector m_vArticleStack;
+    
+    private Label cTitleLabel;
+    
     //Lwuit Commands:   
     JsonObject m_oData = null;
     String m_sTitle = "";
@@ -39,8 +43,20 @@ public class ArticlePage extends BasePage {
     
     private int[] m_iToRequest = new int[6];
     
+    public int[] getRequestInts() {
+        return m_iToRequest;
+    }
+    
     public ArticlePage(String _sTitle, JsonObject _oData) {
         super("ArticlePageForm", PAGE_MAIN);
+        
+        cTitleLabel = (Label)mainMIDlet.getBuilder().findByName("SubjectTitleLabel", m_cHeaderContainer);
+        
+        m_vArticleStack = new Vector();
+        String[] toAdd = new String[2];
+        toAdd[0] = _sTitle;
+        toAdd[1] = "0";
+        m_vArticleStack.addElement(toAdd);
         
         if(!m_bIsLoaded) {
             //TODO: make error dialog.
@@ -51,11 +67,7 @@ public class ArticlePage extends BasePage {
         m_sTitle = _sTitle;
         try {
             //Create dynamic components here.
-            Label cTitleLabel = (Label)mainMIDlet.getBuilder().findByName("SubjectTitleLabel", m_cHeaderContainer);
-            if(cTitleLabel != null) {
-                String realTitle = _sTitle.replace('_', ' ');
-                cTitleLabel.setText(realTitle);
-            }
+            
             
             m_cForm.addShowListener(new ActionListener() {
                 public void actionPerformed(ActionEvent ev) {
@@ -77,12 +89,9 @@ public class ArticlePage extends BasePage {
     
     public void updateSoftkeys() {
         int i = 0;
-        if(true){
-            return;
-        }
         m_cForm.removeAllCommands();
         String  str = "";
-        str = mainMIDlet.getString("ExitSK");
+        str = mainMIDlet.getString("BackSK");
         m_cForm.addCommand(new Command(str, COMMAND_BACK), i++);
         str = mainMIDlet.getString("SearchSK");
         m_cForm.addCommand(new Command(str, COMMAND_SEARCH), i++);
@@ -116,7 +125,13 @@ public class ArticlePage extends BasePage {
         switch(commandId) {                
             //Softkeys
             case COMMAND_BACK:
-                    mainMIDlet.pageBack();
+                    if(m_vArticleStack != null && m_vArticleStack.size() > 0) {
+                        String[] titleAndSections = (String[])m_vArticleStack.lastElement();
+                        NetworkController.getInstance().performSearch(titleAndSections[0], titleAndSections[1]);
+                        m_vArticleStack.removeElementAt(m_vArticleStack.size() - 1);
+                    } else {
+                        mainMIDlet.setCurrentPage(new MainPage());
+                    }
                 break;
             case COMMAND_SEARCH:
                     mainMIDlet.setCurrentPage(new SearchPage());
@@ -148,7 +163,14 @@ public class ArticlePage extends BasePage {
                                 for(int i = 0; i < arrayLevel + 1; i++) {
                                     m_sCurrentSections += "|" + m_iToRequest[i];
                                 }
-                                
+                                if(m_vArticleStack.size() > 0) {
+                                    m_vArticleStack.removeElementAt(m_vArticleStack.size() - 1);
+                                }
+                                String[] toAdd = new String[2];
+                                toAdd[0] = m_sTitle;
+                                toAdd[1] = m_sCurrentSections;
+                                m_vArticleStack.addElement(toAdd);
+                                m_vArticleStack.addElement(section);
                                 NetworkController.getInstance().performSearch(m_sTitle,  m_sCurrentSections);
                             }
                         }//end if(section instanceof SectionComponentItem)
@@ -179,19 +201,39 @@ public class ArticlePage extends BasePage {
     public void addData(Object _results) {
         if(_results == null) {
             //We have nothing, make the data call.
+            String[] toAdd = new String[2];
+            toAdd[0] = m_sTitle;
+            toAdd[1] = m_sCurrentSections;
+            m_vArticleStack.addElement(toAdd);
             NetworkController.getInstance().performSearch(m_sTitle, m_sCurrentSections);
         }
+        
+        
+
         Vector sections = Utilities.getSectionsFromJSON((JsonObject)_results);
         Integer highestTocSoFar = new Integer(1);
         if(m_cContentContainer != null && sections != null && sections.size() > 0)
         {
             m_cContentContainer.removeAll();
+            
+            
+           m_sTitle = Utilities.getNormalizedTitleFromJSON((JsonObject)_results);
+
+            if(cTitleLabel != null) {
+                String realTitle = m_sTitle.replace('_', ' ');
+                cTitleLabel.setText(realTitle);
+            }
+            
+            
             //Deal with the main article text first.
            
             Object oTextItem = sections.firstElement();
             if(oTextItem instanceof JsonObject) {
                 String sText = (String)((JsonObject)oTextItem).get("text");
                 sText = Utilities.stripSlash(sText);
+                
+                
+                
                 HTMLComponentItem oHTMLItem = new HTMLComponentItem(sText);
                 HTMLComponent cTextComp = (HTMLComponent)oHTMLItem.getComponent();
                 if(cTextComp != null) {
@@ -204,7 +246,8 @@ public class ArticlePage extends BasePage {
                             int wikiIdx = url.indexOf("/wiki/");
                             if(wikiIdx >= 0) {
                                 String title = url.substring(wikiIdx + 6);
-                                mainMIDlet.setCurrentPage(new ArticlePage(title, null));
+                                NetworkController.getInstance().performSearch(title, "0");
+                                //mainMIDlet.setCurrentPage(new ArticlePage(title, null));
                             }
                             return false;
                         }

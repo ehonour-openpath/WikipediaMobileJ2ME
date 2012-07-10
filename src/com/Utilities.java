@@ -86,4 +86,8 @@ public class Utilities {
         }
         return vReturnVec;
     }
+    
+    public static String getNormalizedTitleFromJSON(JsonObject _oJson) {
+        return ((JsonObject)((JsonObject)_oJson).get("mobileview")).getString("normalizedtitle");
+    }
 }
