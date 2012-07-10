@@ -208,23 +208,18 @@ public class ArticlePage extends BasePage {
             NetworkController.getInstance().performSearch(m_sTitle, m_sCurrentSections);
         }
         
-        
+        m_sTitle = Utilities.getNormalizedTitleFromJSON((JsonObject)_results);
+        System.out.println("   ---   in addData, title is " + m_sTitle);
+        if(cTitleLabel != null) {
+            String realTitle = m_sTitle.replace('_', ' ');
+            cTitleLabel.setText(realTitle);
+        }
 
         Vector sections = Utilities.getSectionsFromJSON((JsonObject)_results);
         Integer highestTocSoFar = new Integer(1);
         if(m_cContentContainer != null && sections != null && sections.size() > 0)
         {
             m_cContentContainer.removeAll();
-            
-            
-           m_sTitle = Utilities.getNormalizedTitleFromJSON((JsonObject)_results);
-
-            if(cTitleLabel != null) {
-                String realTitle = m_sTitle.replace('_', ' ');
-                cTitleLabel.setText(realTitle);
-            }
-            
-            
             //Deal with the main article text first.
            
             Object oTextItem = sections.firstElement();

@@ -92,7 +92,7 @@ public class NetworkController {
         url.append("&");
         url.append("prop=text%7Csections%7Cnormalizedtitle");
         url.append("&");
-        url.append("sectionprop=toclevel%7Cline%7Cnumber%7C");
+        url.append("sectionprop=toclevel%7Cline%7Cnumber");
 
         //http://rest.annunci.ebay.it/columbus-api/ads?categoryId=16842752&locationId=-1&q=rft&page=0&size=25&extension[histogram]=category&_ver=1.10
         if(_sSection == null || _sSection.length() == 0) {
@@ -111,7 +111,9 @@ public class NetworkController {
             url.append("&");
             sKeyword = sKeyword.replace(' ', '+');
             url.append("page=");           
-            url.append(HtmlEncode(sKeyword));
+            // We append an underscore to the end of the keyword to ensure
+            // that we get back a normalized title.
+            url.append(HtmlEncode(sKeyword) + "_");
             //url.append("");
         }
         
