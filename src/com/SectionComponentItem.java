@@ -31,9 +31,10 @@ public class SectionComponentItem extends ComponentItem {
     }//end isActive()
     
     public void setActive(boolean _bActive) {
-        m_bActive = _bActive;        
+        m_bActive = _bActive;   
+        Button cButton = null;
         if(m_cComponent != null) {
-            Button cButton = (Button)mainMIDlet.getBuilder().findByName("SectionArrowButton", (Container)m_cComponent);
+            cButton = (Button)mainMIDlet.getBuilder().findByName("SectionArrowButton", (Container)m_cComponent);
             if(cButton != null ) {
                 Image newImage = null;
                 if(_bActive) {
@@ -89,13 +90,38 @@ public class SectionComponentItem extends ComponentItem {
     public Component createComponent(String _sTitle, boolean _bActive, int _iSectionLevel) {
         m_bActive = _bActive;
         m_iSectionLevel = _iSectionLevel;
-        Container cCont = mainMIDlet.getBuilder().createContainer(mainMIDlet.getResources(), "SectionItem");
+        Container cCont = null;
+        switch(m_iSectionLevel) {
+            case 1:
+                cCont = mainMIDlet.getBuilder().createContainer(mainMIDlet.getResources(), "SectionItem");
+                break;
+            case 2:
+                cCont = mainMIDlet.getBuilder().createContainer(mainMIDlet.getResources(), "SectionLevel2Item");
+                break;
+            case 3:
+                cCont = mainMIDlet.getBuilder().createContainer(mainMIDlet.getResources(), "SectionLevel3Item");
+                break;
+            case 4:
+                cCont = mainMIDlet.getBuilder().createContainer(mainMIDlet.getResources(), "SectionLevel4Item");
+                break;
+            default:
+                cCont = mainMIDlet.getBuilder().createContainer(mainMIDlet.getResources(), "SectionLevel4Item");
+                break;
+        }
         if(cCont != null) {
             m_cSubContainer = (Container)mainMIDlet.getBuilder().findByName("SubContainer", cCont);
-            Label cTitle = (Label)mainMIDlet.getBuilder().findByName("SectionTitleLabel", cCont);
-            if(cTitle != null) {
-                cTitle.setText(_sTitle);
-            }            
+            if(m_iSectionLevel > 1) {
+                Button cTitle = (Button)mainMIDlet.getBuilder().findByName("SectionTitleLabel", cCont);
+                if(cTitle != null) {
+                    Command newCommand = new Command(_sTitle, m_iActionId);
+                    cTitle.setCommand(newCommand);
+                }
+            } else {
+                Label cTitle = (Label)mainMIDlet.getBuilder().findByName("SectionTitleLabel", cCont);
+                if(cTitle != null) {
+                    cTitle.setText(_sTitle);
+                }            
+            }
         }
         m_cComponent = (Component)cCont;
         setActive(_bActive);

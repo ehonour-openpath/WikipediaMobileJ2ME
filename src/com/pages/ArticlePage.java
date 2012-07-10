@@ -219,7 +219,7 @@ public class ArticlePage extends BasePage {
             //TODO: There must be a better way to do this.
             SectionComponentItem[] aSections = new SectionComponentItem[6];
             for(int i = 1; i < sections.size(); i++) {
-                System.out.println(sections.elementAt(i));
+                //System.out.println(sections.elementAt(i));
                 JsonObject oSection = (JsonObject)sections.elementAt(i);
                 String sTitle = (String)oSection.get("line");
                 String sText = (String)oSection.get("text");
@@ -250,7 +250,7 @@ public class ArticlePage extends BasePage {
                         //set this item into the array and set it to the child of the parent.
                         aSections[arrayLevel] = sectionItem;
 
-                        System.out.println(sText);
+                        //System.out.println(sText);
                         
                         if(sText != null && !(sText.length() < 1)) {
                             //TODO: Need to strip out the <h2> tag at the beginning
